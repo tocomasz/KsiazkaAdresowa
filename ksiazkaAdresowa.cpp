@@ -17,46 +17,54 @@ struct Person
 	string firstName, lastName, nrTel, email, adres;
 };
 
-int loadContactsFromFile(vector<Person> &contacts, int registeredContactsCount);
+int loadContactsFromFile(vector<Person> &contacts);
 void saveContactsToFile(Person person);
 int addNewContact(vector<Person> &contacts, int registeredContactsCount);
+int deleteContact(vector<Person> &contacts, int registeredContactsCount);
+void deleteContactFromFile(Person person);
 void printContact(Person person);
 void printHeaderRow();
-void findContact(vector<Person> &contacts, int registeredContactsCount);
+void printAllContacts(vector<Person> &contacts, int registeredContactsCount);
+void findContactByName(vector<Person> &contacts, int registeredContactsCount);
+void findContactByLastName(vector<Person> &contacts, int registeredContactsCount);
 
 int main()
 {
 	vector <Person> contacts;
 	char menuChoice;
 	int registeredContactsCount = 0;
-	registeredContactsCount = loadContactsFromFile(contacts, registeredContactsCount);
+	registeredContactsCount = loadContactsFromFile(contacts);
 	while (1)
 	{
 		system("cls");
-		cout << "1. Dodaj nowa osobe" << endl;
-		cout << "2. Szukaj" << endl;
+		cout << "1. Dodaj adresata" << endl;
+		cout << "2. Wyszukaj po imieniu" << endl;
+		cout << "3. Wyszukaj po nazwisku" << endl;
+		cout << "4. Wyswietl wszystkich adresatow" << endl;
+		cout << "5. Usun adresata" << endl;
+		cout << "6. Edytuj adresata" << endl;
 		cout << "9. Zakoncz proogram" << endl;
 
 		cin >> menuChoice;
-		if (menuChoice == '1')
+		switch (menuChoice)
 		{
-			registeredContactsCount = addNewContact(contacts, registeredContactsCount);
-		}
-		else if (menuChoice == '2')
-		{
-			findContact(contacts, registeredContactsCount);
-		}
-		else if (menuChoice == '9')
-		{
-			exit(0);
+		case '1': registeredContactsCount = addNewContact(contacts, registeredContactsCount); break;
+		case '2': findContactByName(contacts, registeredContactsCount); break;
+		case '3': findContactByLastName(contacts, registeredContactsCount); break;
+		case '4': printAllContacts(contacts, registeredContactsCount); break;
+		case '5': registeredContactsCount = deleteContact(contacts, registeredContactsCount); break;
+		case '6': break;
+		case '9': exit(0); break;
+		default: break;
 		}
 	}
 	return 0;
 }
 
 
-int loadContactsFromFile(vector<Person> &contacts, int registeredContactsCount)
+int loadContactsFromFile(vector<Person> &contacts)
 {
+	int registeredContactsCount = 0;
 	fstream file;
 	file.open("dane_adresowe.txt", ios::in);
 	if (!file.good())
@@ -91,7 +99,6 @@ int loadContactsFromFile(vector<Person> &contacts, int registeredContactsCount)
 			contacts.push_back(temporaryPerson);
 			registeredContactsCount++;
 		}
-
 	}
 	file.close();
 	file.clear();
@@ -118,7 +125,6 @@ void saveContactsToFile(Person person)
 		cout << "Blad zapisu pliku" << endl;
 		system("pause");
 	}
-
 }
 
 int addNewContact(vector<Person> &contacts, int registeredContactsCount)
@@ -137,15 +143,87 @@ int addNewContact(vector<Person> &contacts, int registeredContactsCount)
 	cout << "Podaj adres: ";
 	cin.ignore();
 	getline(cin, temporaryPerson.adres);
-	temporaryPerson.id = ++registeredContactsCount;
+
+	if (registeredContactsCount == 0)
+		temporaryPerson.id = ++registeredContactsCount;
+
+	else
+	{
+		temporaryPerson.id = contacts.back().id + 1;
+		registeredContactsCount++;
+	}
+
 	contacts.push_back(temporaryPerson);
 	saveContactsToFile(temporaryPerson);
-
 	return registeredContactsCount;
+}
+
+int deleteContact(vector<Person> &contacts, int registeredContactsCount)
+{
+
+	system("cls");
+	cout << "Podaj nr ID kontaktu do usuniecia: ";
+	int contactToDelete;
+	cin >> contactToDelete;
+	for (vector<Person>::iterator it = contacts.begin(), end = contacts.end(); it != end; ++it)
+	{
+		if (it->id == contactToDelete)
+		{
+			printHeaderRow();
+			printContact(*it);
+			cout << endl << endl;
+			char choice;
+			do
+			{
+				cout << "Czy na pewno chcesz usunac tego adresata? t/n :";
+				cin >> choice;
+			} while (choice != 't' && choice != 'n');
+
+			if (choice == 't')
+			{
+				deleteContactFromFile(*it);
+				contacts.erase(it);
+				registeredContactsCount--;
+			}
+			system("pause");
+			return registeredContactsCount;
+		}
+	}
+	cout << "Nie znaleziono danego adresata. Nacisnij dowolny przycisk by powrocic do menu" << endl;
+	system("pause");
+	return registeredContactsCount;
+
+
+}
+
+void deleteContactFromFile(Person person)
+{
+	fstream file, temp;
+	file.open("dane_adresowe.txt", ios::in);
+	temp.open("temp.txt", ios::out);
+	if (file.good() && temp.good())
+	{
+		string loadedLine;
+		while (getline(file, loadedLine))
+		{
+			if (loadedLine[0] - '0' == person.id)
+				continue;
+			temp << loadedLine << endl;
+		}
+	}
+	file.close();
+	file.clear();
+	temp.close();
+	temp.clear();
+	remove("dane_adresowe.txt");
+	rename("temp.txt", "dane_adresowe.txt");
+
+
 }
 
 void printContact(Person person)
 {
+	cout << setw(8) << left << person.id;
 	cout << setw(12) << left << person.firstName;
 	cout << setw(12) << left << person.lastName;
 	cout << setw(12) << left << person.nrTel;
@@ -156,7 +234,7 @@ void printContact(Person person)
 void printHeaderRow()
 {
 	system("cls");
-	cout << "Znaleziono nastepujace osoby: " << endl;
+	cout << setw(8) << left << "[NR ID]";
 	cout << setw(12) << left << "[IMIE]";
 	cout << setw(12) << left << "[NAZWISKO]";
 	cout << setw(12) << left << "[NR TEL]";
@@ -164,56 +242,46 @@ void printHeaderRow()
 	cout << setw(30) << left << "[ADRES]" << endl;
 }
 
-void findContact(vector<Person> &contacts, int registeredContactsCount)
+void printAllContacts(vector<Person> &contacts, int registeredContactsCount)
 {
-	char menuChoice;
-	while (1)
+	printHeaderRow();
+	for (int i = 0; i < registeredContactsCount; i++)
 	{
-		system("cls");
-		cout << "1. Szukaj po imieniu" << endl;
-		cout << "2. Szukaj po nazwisku" << endl;
-		cout << "3. Pokaz wszystkich" << endl;
-		cout << "4. Powrot do menu glownego" << endl;
-		cin >> menuChoice;
-		if (menuChoice == '1')
-		{
-			string firstName;
-			system("cls");
-			cout << "Podaj imie do wyszukania: ";
-			cin >> firstName;
+		printContact(contacts[i]);
+	}
+	system("pause");
+}
 
-			printHeaderRow();
-			for (int i = 0; i < registeredContactsCount; i++)
-			{
-				if (contacts[i].firstName == firstName)
-					printContact(contacts[i]);
-			}
-			system("pause");
-		}
-		else if (menuChoice == '2')
+void findContactByName(vector<Person> &contacts, int registeredContactsCount)
+{
+	string firstName;
+	system("cls");
+	cout << "Podaj imie do wyszukania: ";
+	cin >> firstName;
+
+	printHeaderRow();
+	for (int i = 0; i < registeredContactsCount; i++)
+	{
+		if (contacts[i].firstName == firstName)
+			printContact(contacts[i]);
+	}
+	system("pause");
+}
+
+void findContactByLastName(vector<Person> &contacts, int registeredContactsCount)
+{
+	{
+		string lastName;
+		system("cls");
+		cout << "Podaj nazwisko do wyszukania: ";
+		cin >> lastName;
+
+		printHeaderRow();
+		for (int i = 0; i < registeredContactsCount; i++)
 		{
-			string lastName;
-			system("cls");
-			cout << "Podaj nazwisko do wyszukania: ";
-			cin >> lastName;
-			printHeaderRow();
-			for (int i = 0; i < registeredContactsCount; i++)
-			{
-				if (contacts[i].lastName == lastName)
-					printContact(contacts[i]);
-			}
-			system("pause");
-		}
-		else if (menuChoice == '3')
-		{
-			printHeaderRow();
-			for (int i = 0; i < registeredContactsCount; i++)
-			{
+			if (contacts[i].lastName == lastName)
 				printContact(contacts[i]);
-			}
-			system("pause");
 		}
-		else if (menuChoice == '4')
-			break;
+		system("pause");
 	}
 }
