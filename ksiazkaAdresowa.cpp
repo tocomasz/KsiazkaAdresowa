@@ -22,6 +22,8 @@ void saveContactsToFile(Person person);
 int addNewContact(vector<Person> &contacts, int registeredContactsCount);
 int deleteContact(vector<Person> &contacts, int registeredContactsCount);
 void deleteContactFromFile(Person person);
+void editContact(vector <Person> &contacts);
+void updateContactInFile(Person person);
 void printContact(Person person);
 void printHeaderRow();
 void printAllContacts(vector<Person> &contacts, int registeredContactsCount);
@@ -43,7 +45,8 @@ int main()
 		cout << "4. Wyswietl wszystkich adresatow" << endl;
 		cout << "5. Usun adresata" << endl;
 		cout << "6. Edytuj adresata" << endl;
-		cout << "9. Zakoncz proogram" << endl;
+		cout << "9. Zakoncz program" << endl;
+		cout << "Twoj wybor: ";
 
 		cin >> menuChoice;
 		switch (menuChoice)
@@ -53,14 +56,13 @@ int main()
 		case '3': findContactByLastName(contacts, registeredContactsCount); break;
 		case '4': printAllContacts(contacts, registeredContactsCount); break;
 		case '5': registeredContactsCount = deleteContact(contacts, registeredContactsCount); break;
-		case '6': break;
+		case '6': editContact(contacts); break;
 		case '9': exit(0); break;
 		default: break;
 		}
 	}
 	return 0;
 }
-
 
 int loadContactsFromFile(vector<Person> &contacts)
 {
@@ -146,7 +148,6 @@ int addNewContact(vector<Person> &contacts, int registeredContactsCount)
 
 	if (registeredContactsCount == 0)
 		temporaryPerson.id = ++registeredContactsCount;
-
 	else
 	{
 		temporaryPerson.id = contacts.back().id + 1;
@@ -160,7 +161,6 @@ int addNewContact(vector<Person> &contacts, int registeredContactsCount)
 
 int deleteContact(vector<Person> &contacts, int registeredContactsCount)
 {
-
 	system("cls");
 	cout << "Podaj nr ID kontaktu do usuniecia: ";
 	int contactToDelete;
@@ -171,7 +171,7 @@ int deleteContact(vector<Person> &contacts, int registeredContactsCount)
 		{
 			printHeaderRow();
 			printContact(*it);
-			cout << endl << endl;
+			cout << endl;
 			char choice;
 			do
 			{
@@ -192,8 +192,6 @@ int deleteContact(vector<Person> &contacts, int registeredContactsCount)
 	cout << "Nie znaleziono danego adresata. Nacisnij dowolny przycisk by powrocic do menu" << endl;
 	system("pause");
 	return registeredContactsCount;
-
-
 }
 
 void deleteContactFromFile(Person person)
@@ -217,8 +215,76 @@ void deleteContactFromFile(Person person)
 	temp.clear();
 	remove("dane_adresowe.txt");
 	rename("temp.txt", "dane_adresowe.txt");
+}
 
+void editContact(vector<Person> &contacts)
+{
+	system("cls");
+	cout << "Podaj nr ID kontaktu do edycji: ";
+	int contactToDelete;
+	cin >> contactToDelete;
+	for (vector<Person>::iterator it = contacts.begin(), end = contacts.end(); it != end; ++it)
+	{
+		if (it->id == contactToDelete)
+		{
+			int choice;
+			while(1)
+			{
+				system("cls");
+				printHeaderRow();
+				printContact(*it);
+				cout << endl;
+				cout << "Wybierz ktora dana zmienic: " << endl;
+				cout << "1 - imie\n2 - nazwisko\n3 - nr telefonu\n4 - email\n5 - adres\n6 - powrot do menu" << endl;;
+				cin >> choice;
+				string change;
+				switch (choice)
+				{
+				case 1: cout << "Podaj imie: "; cin.ignore(); getline(cin, it->firstName); break;
+				case 2: cout << "Podaj nazwisko: "; cin.ignore(); getline(cin, it->lastName); break;
+				case 3: cout << "Podaj nr telefonu: "; cin.ignore(); getline(cin, it->nrTel); break;
+				case 4: cout << "Podaj email: "; cin.ignore(); getline(cin, it->email); break;
+				case 5: cout << "Podaj adres: "; cin.ignore(); getline(cin, it->adres); break;
+				}
+				if (choice == 6)
+					return;
+				updateContactInFile(*it);
+			}
+		}
+	}
+	cout << "Nie znaleziono danego adresata. Nacisnij dowolny przycisk by powrocic do menu" << endl;
+	system("pause");
+}
 
+void updateContactInFile(Person person)
+{
+	fstream file, temp;
+	file.open("dane_adresowe.txt", ios::in);
+	temp.open("temp.txt", ios::out);
+	if (file.good() && temp.good())
+	{
+		string loadedLine;
+		while (getline(file, loadedLine))
+		{
+			if (loadedLine[0] - '0' == person.id)
+			{
+				temp << person.id << "|";
+				temp << person.firstName << "|";
+				temp << person.lastName << "|";
+				temp << person.nrTel << "|";
+				temp << person.email << "|";
+				temp << person.adres << "|" << endl;
+				continue;
+			}	
+			temp << loadedLine << endl;
+		}
+	}
+	file.close();
+	file.clear();
+	temp.close();
+	temp.clear();
+	remove("dane_adresowe.txt");
+	rename("temp.txt", "dane_adresowe.txt");
 }
 
 void printContact(Person person)
