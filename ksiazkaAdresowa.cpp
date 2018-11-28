@@ -1,6 +1,4 @@
-﻿// ksiazkaAdresowa.cpp : Defines the entry point for the console application.
-//
-
+﻿
 #include "stdafx.h"
 #include <iostream>
 #include <windows.h>
@@ -26,6 +24,8 @@ struct User
 
 int logIn(vector <User> &users, int registeredUsers);
 int registerUser(vector <User> &users, int registeredUser);
+int loadUsersFromFile(vector <User> &users);
+void saveUserToFile(User user);
 int loadContactsFromFile(vector<Person> &contacts);
 void saveContactsToFile(Person person);
 int addNewContact(vector<Person> &contacts, int registeredContacts);
@@ -45,10 +45,14 @@ int main()
 	vector <User> users;
 	int registeredContacts = 0;
 	int registeredUsers = 0;
+	registeredUsers = loadUsersFromFile(users);
 	int loggedUser = 0;
 	char menuChoice;
+
+
 	while (1)
 	{
+
 		while (loggedUser == 0)
 		{
 			system("cls");
@@ -96,6 +100,117 @@ int main()
 		}
 	}
 	return 0;
+}
+
+int registerUser(vector <User> &users, int registeredUsers)
+{
+	User temporaryUser;
+	system("cls");
+	cout << "Podaj login: ";
+	cin >> temporaryUser.username;
+	//TODO sprawdz czy uzytkownik istnieje
+	cout << "Podaj haslo: ";
+	cin >> temporaryUser.password;
+
+	if (registeredUsers == 0)
+		temporaryUser.id = ++registeredUsers;
+	else
+	{
+		temporaryUser.id = users.back().id + 1;
+		registeredUsers++;
+	}
+
+	users.push_back(temporaryUser);
+	saveUserToFile(temporaryUser);
+	return registeredUsers;
+}
+
+int logIn(vector <User> &users, int registeredUsers)
+{
+	string userName, password;
+	system("cls");
+	cout << "Podaj login: ";
+	cin >> userName;
+	for (vector<User>::iterator it = users.begin(), end = users.end(); it != end; it++)
+	{
+		if (it->username == userName)
+		{
+			cout << "Podaj haslo: ";
+			cin >> password;
+			if (it->password == password)
+			{
+				cout << "Zalogowano poprawnie" << endl;
+				system("pause");
+				return it->id;
+			}
+			cout << "Podano niepoprawne haslo" << endl;
+			system("pause");
+			return 0;
+		}
+	}
+	cout << "Nie znaleziono uzytkownika o podanym loginie" << endl;
+	system("pause");
+	return 0;
+}
+
+int loadUsersFromFile(vector <User> &users)
+{
+	int registeredUsers = 0;
+	fstream file;
+	file.open("uzytkownicy.txt", ios::in);
+	if (!file.good())
+		return 0;
+	else
+	{
+		string loadedLine;
+		User temporaryUser;
+		while (getline(file, loadedLine))
+		{
+			string temporaryText = "";
+			int loadedLineCounter = 1;
+			for (int i = 0; i < loadedLine.length(); i++)
+			{
+				if (loadedLine[i] == '|' || loadedLine[i] == '\0')
+				{
+					switch (loadedLineCounter)
+					{
+					case 1: temporaryUser.id = atoi(temporaryText.c_str()); break;
+					case 2: temporaryUser.username = temporaryText; break;
+					case 3: temporaryUser.password = temporaryText; break;
+
+					}
+					temporaryText = "";
+					loadedLineCounter++;
+				}
+				else
+					temporaryText += loadedLine[i];
+			}
+			users.push_back(temporaryUser);
+			registeredUsers++;
+		}
+	}
+	file.close();
+	file.clear();
+	return registeredUsers;
+}
+
+void saveUserToFile(User user)
+{
+	fstream file;
+	file.open("uzytkownicy.txt", ios::out | ios::app);
+	if (file.good())
+	{
+		file << user.id << "|";
+		file << user.username << "|";
+		file << user.password << "|" << endl;
+		file.close();
+		file.clear();
+	}
+	else
+	{
+		cout << "Blad zapisu pliku" << endl;
+		system("pause");
+	}
 }
 
 int loadContactsFromFile(vector<Person> &contacts)
@@ -192,56 +307,7 @@ int addNewContact(vector<Person> &contacts, int registeredContacts)
 	return registeredContacts;
 }
 
-int registerUser(vector <User> &users, int registeredUsers)
-{
-	User temporaryUser;
-	system("cls");
-	cout << "Podaj login: ";
-	cin >> temporaryUser.username;
-	//TODO sprawdz czy uzytkownik istnieje
-	cout << "Podaj haslo: ";
-	cin >> temporaryUser.password;
 
-	if (registeredUsers == 0)
-		temporaryUser.id = ++registeredUsers;
-	else
-	{
-		temporaryUser.id = users.back().id + 1;
-		registeredUsers++;
-	}
-
-	users.push_back(temporaryUser);
-	//TODO save user to file
-	return registeredUsers;
-}
-
-int logIn(vector <User> &users, int registeredUsers)
-{
-	string userName, password;
-	system("cls");
-	cout << "Podaj login: ";
-	cin >> userName;
-	for (vector<User>::iterator it = users.begin(), end = users.end(); it != end; it++)
-	{
-		if (it->username == userName)
-		{
-			cout << "Podaj haslo: ";
-			cin >> password;
-			if (it->password == password)
-			{
-				cout << "Zalogowano poprawnie" << endl;
-				system("pause");
-				return it->id;
-			}
-			cout << "Podano niepoprawne haslo" << endl;
-			system("pause");
-			return 0;
-		}
-	}
-	cout << "Nie znaleziono uzytkownika o podanym loginie" << endl;
-	system("pause");
-	return 0;
-}
 
 int deleteContact(vector<Person> &contacts, int registeredContacts)
 {
