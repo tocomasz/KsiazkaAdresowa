@@ -1,7 +1,4 @@
-﻿// ksiazkaAdresowa.cpp : Defines the entry point for the console application.
-//
-
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include <iostream>
 #include <windows.h>
 #include <string>
@@ -30,6 +27,9 @@ int logIn(vector <User> &users, int registeredUsers);
 bool userExist(vector <User> &users, string username);
 void saveUserToFile(User user);
 int registerUser(vector <User> &users, int registeredUser);
+
+void updateUserInFile(User user);
+void editUser(vector <User> &users, int &loggedUser);
 
 int findUserId(string loadedLine);
 void loadContactsFromFile(vector<Person> &contacts, int loggedUser);
@@ -103,7 +103,7 @@ int main()
 			case '4': printAllContacts(contacts); break;
 			case '5': deleteContact(contacts); break;
 			case '6': editContact(contacts, loggedUser); break;
-			case '7': break;
+			case '7': editUser(users, loggedUser); break;
 			case '8': loggedUser = 0; break;
 			default: break;
 			}
@@ -243,6 +243,67 @@ int registerUser(vector <User> &users, int registeredUsers)
 	users.push_back(temporaryUser);
 	saveUserToFile(temporaryUser);
 	return registeredUsers;
+}
+
+void updateUserInFile(User user)
+{
+	fstream file, temp;
+	file.open("uzytkownicy.txt", ios::in);
+	temp.open("temp.txt", ios::out);
+	if (file.good() && temp.good())
+	{
+		string loadedLine;
+		while (getline(file, loadedLine))
+		{
+			if (loadedLine[0] - '0' == user.id)
+			{
+				temp << user.id << "|";
+				temp << user.username << "|";
+				temp << user.password << "|" << endl;
+				continue;
+			}
+			temp << loadedLine << endl;
+		}
+	}
+	file.close();
+	file.clear();
+	temp.close();
+	temp.clear();
+	remove("uzytkownicy.txt");
+	rename("temp.txt", "uzytkownicy.txt");
+}
+void editUser(vector <User> &users, int &loggedUser)
+{
+	system("cls");
+	cout << "Podaj stare haslo: ";
+	string oldPassword;
+	cin >> oldPassword;
+
+	string newPassword;
+	for (vector<User>::iterator it = users.begin(), end = users.end(); it != end; ++it)
+	{
+		if (it->id == loggedUser)
+		{
+			if (it->password == oldPassword)
+			{
+				cout << "Podaj nowe haslo: ";
+				cin >> newPassword;
+				it->password = newPassword;
+				updateUserInFile(*it);
+				cout << "Haslo zostalo zmienione" << endl;
+				system("pause");
+				return;
+			}
+			else
+			{
+				cout << "Podano niepoprawne haslo. Nastapi automatyczne wylogowanie" << endl;
+				Sleep(2000);
+				loggedUser = 0;
+				return;
+			}
+
+		}
+	}
 }
 
 int findUserId(string loadedLine)
