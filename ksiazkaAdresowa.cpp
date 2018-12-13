@@ -14,19 +14,29 @@ struct Person
 	string firstName, lastName, nrTel, email, adres;
 };
 
-struct User
+class User
 {
+public:
+	static int registeredUsers;
+	static vector <User> users;
 	int id;
 	string username, password;
+
+	User(string name, string pw)
+	{
+		username = name;
+		password = pw;
+		id = ++registeredUsers;
+	}
 };
 
-int loadUsersFromFile(vector <User> &users);
+void loadUsersFromFile(vector <User> &users);
 
-int logIn(vector <User> &users, int registeredUsers);
+int logIn(vector <User> &users);
 
 bool userExist(vector <User> &users, string username);
 void saveUserToFile(User user);
-int registerUser(vector <User> &users, int registeredUser);
+void registerUser(vector <User> &users);
 
 void updateUserInFile(User user);
 void editUser(vector <User> &users, int &loggedUser);
@@ -51,13 +61,16 @@ void printAllContacts(vector<Person> &contacts);
 void findContactByName(vector<Person> &contacts);
 void findContactByLastName(vector<Person> &contacts);
 
+int User::registeredUsers;
+vector<User> User::users;
+
+
 int main()
 {
 	vector <Person> contacts;
-	vector <User> users;
-	int registeredUsers = 0;
-	registeredUsers = loadUsersFromFile(users);
+	loadUsersFromFile(User::users);
 	int loggedUser = 0;
+
 
 	while (1)
 	{
@@ -72,8 +85,8 @@ int main()
 			cin >> menuChoice;
 			switch (menuChoice)
 			{
-			case '1': loggedUser = logIn(users, registeredUsers); break;
-			case '2': registeredUsers = registerUser(users, registeredUsers); break;
+			case '1': loggedUser = logIn(User::users); break;
+			case '2': registerUser(User::users); break;
 
 			case '9': exit(0); break;
 			}
@@ -103,7 +116,7 @@ int main()
 			case '4': printAllContacts(contacts); break;
 			case '5': deleteContact(contacts); break;
 			case '6': editContact(contacts, loggedUser); break;
-			case '7': editUser(users, loggedUser); break;
+			case '7': editUser(User::users, loggedUser); break;
 			case '8': loggedUser = 0; break;
 			default: break;
 			}
@@ -112,17 +125,17 @@ int main()
 	return 0;
 }
 
-int loadUsersFromFile(vector <User> &users)
+void loadUsersFromFile(vector <User> &users)
 {
-	int registeredUsers = 0;
 	fstream file;
 	file.open("uzytkownicy.txt", ios::in);
 	if (!file.good())
-		return 0;
+		return;
 	else
 	{
 		string loadedLine;
-		User temporaryUser;
+		string username;
+		string password;
 		while (getline(file, loadedLine))
 		{
 			string temporaryText = "";
@@ -133,9 +146,9 @@ int loadUsersFromFile(vector <User> &users)
 				{
 					switch (loadedLineCounter)
 					{
-					case 1: temporaryUser.id = atoi(temporaryText.c_str()); break;
-					case 2: temporaryUser.username = temporaryText; break;
-					case 3: temporaryUser.password = temporaryText; break;
+					case 1: break;
+					case 2: username = temporaryText; break;
+					case 3: password = temporaryText; break;
 
 					}
 					temporaryText = "";
@@ -144,16 +157,16 @@ int loadUsersFromFile(vector <User> &users)
 				else
 					temporaryText += loadedLine[i];
 			}
+			User temporaryUser(username, password);
 			users.push_back(temporaryUser);
-			registeredUsers++;
 		}
 	}
 	file.close();
 	file.clear();
-	return registeredUsers;
+	return;
 }
 
-int logIn(vector <User> &users, int registeredUsers)
+int logIn(vector <User> &users)
 {
 	string userName, password;
 	system("cls");
@@ -216,33 +229,26 @@ void saveUserToFile(User user)
 	}
 }
 
-int registerUser(vector <User> &users, int registeredUsers)
+void registerUser(vector <User> &users)
 {
-	User temporaryUser;
 	system("cls");
+	string username;
 	cout << "Podaj login: ";
-	cin >> temporaryUser.username;
-	while (userExist(users, temporaryUser.username))
+	cin >> username;
+	while (userExist(users, username))
 	{
 		system("cls");
 		cout << "Uzytkownik o podanym loginie istnieje. Podaj inny login: ";
-		cin >> temporaryUser.username;
+		cin >> username;
 	}
-
+	string password;
 	cout << "Podaj haslo: ";
-	cin >> temporaryUser.password;
+	cin >> password;
 
-	if (registeredUsers == 0)
-		temporaryUser.id = ++registeredUsers;
-	else
-	{
-		temporaryUser.id = users.back().id + 1;
-		registeredUsers++;
-	}
-
+	User temporaryUser(username, password);
 	users.push_back(temporaryUser);
 	saveUserToFile(temporaryUser);
-	return registeredUsers;
+	return;
 }
 
 void updateUserInFile(User user)
